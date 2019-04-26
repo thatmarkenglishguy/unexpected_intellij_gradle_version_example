@@ -1,0 +1,48 @@
+// library_changes_across_versions
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+apply plugin: 'maven-publish'
+
+group 'com.example.broken'
+version '1.0.0'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    // AssertJ
+    testImplementation 'org.assertj:assertj-core:3.+'
+    // JUnit Jupiter API and TestEngine implementation
+    testCompile("org.junit.jupiter:junit-jupiter-api:5.+")
+    testImplementation ('org.junit.jupiter:junit-jupiter-params:5.+')
+    testRuntime("org.junit.jupiter:junit-jupiter-engine:5.+")
+}
+
+test {
+    useJUnitPlatform()
+}
+
+def repoDir = "${projectDir}/../repos/repo_shared"
+
+publish.doFirst {
+    mkdir "${repoDir}"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url "file://${repoDir}"
+            name 'local_repo_1'
+        }
+    }
+}

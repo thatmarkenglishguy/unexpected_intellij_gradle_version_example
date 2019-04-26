@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+startdir="$(pwd)"
+trap "cd '${startdir}'" 0
+repos_dir="${script_dir}/repos"
+
+function show_the_repository() {
+  echo
+  echo '--- Repository layout ---'
+  if which tree 2>&1 1>/dev/null
+  then
+    tree -d "${repos_dir}"
+  else
+    find "${repos_dir}" -type d
+  fi
+}
+
+function reset_gitdir() {
+  git reset HEAD --hard
+  git status . --porcelain | grep '^??' | cut -c 4- | grep '.java$' | xargs rm
+}
+
+echo '---Cleaning example local maven repositories---'
+rm -rf "${repos_dir}"
+mkdir -p "${repos_dir}"
+show_the_repository
+
+echo
+echo '---Build library version 1---'
+pushd "${script_dir}/library_changes_across_versions" >/dev/null
+reset_gitdir
+gradle publish
+
+echo
+echo '---Updating library version 1 to version 2---'
+"${script_dir}"/changeit "${script_dir}/library_changes_across_versions"
+
+echo
+echo '---Publish library version 2---'
+gradle publish
+
+echo
+echo '---Building the application which depends on two versions of the library_changes_across_versions---'
+popd >/dev/null
+pushd "${script_dir}/app_depends_on_changing_library" >/dev/null
+gradle build
+
+echo
+echo 'NOTE: App fails to build because it uses methods in each version of library_changes_across_versions.'
+
+show_the_repository
+
+echo '---Attempting to open IntelliJ for application depending on library---'
+if which idea >/dev/null
+then
+  idea "${script_dir}/app_depends_on_changing_library"
+else
+  echo 'IntelliJ "idea" command line script not on PATH.
+This is used to launch IntelliJ from the command line.
+If you want to take advange of this in the future,
+try opening IntelliJ and running Tools/Create Launcher Script...'
+  exit 1
+fi
+
+cat <<EOF
+1) Import the app project into IntelliJ (e.g. Open build.gradle with IntelliJ and Open as Project).
+2) Run the tests (e.g. open src/tests/java in the Project window, right click and "Run 'All Tests'").
+   Note that the "ChangingLibraryTest.java" test case causes no problems in the IDE despite failing the build at the command-line,
+   and that typically the test case even passes.
+
+
+Note:
+If you want to reset, run ./cleanup
+EOF

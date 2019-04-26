@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+git reset HEAD --hard
+git status . --porcelain | grep '^??' | cut -c 4- | grep '.java$' | xargs rm
+git status . --porcelain --ignored | grep '^!!' | cut -c 4- | grep '.idea/\|out/\|build/\|\.iml$' | xargs rm -rf
+rm -rf repos
+

@@ -1,0 +1,35 @@
+// app_depends_on_changing_library
+
+plugins {
+    id 'java'
+    id 'application'
+}
+
+def reposRootDir = "${projectDir}/../repos"
+
+repositories {
+    jcenter()
+    maven {
+        url "file://${reposRootDir}/repo_shared"
+    }
+}
+
+dependencies {
+    // AssertJ
+    testImplementation 'org.assertj:assertj-core:3.+'
+    // JUnit Jupiter API and TestEngine implementation
+    testCompile("org.junit.jupiter:junit-jupiter-api:5.+")
+    testImplementation ('org.junit.jupiter:junit-jupiter-params:5.+')
+    testRuntime("org.junit.jupiter:junit-jupiter-engine:5.+")
+
+    // library which changes across versions
+    testImplementation 'com.example.broken:com.example.broken.library_changes_across_versions:1.0.0'
+    testRuntime 'com.example.broken:com.example.broken.library_changes_across_versions:2.0.+'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// Define the main class for the application
+mainClassName = 'app_depends_on_changing_library.AppDependsOnChangingLibrary'

@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+targetdir="${1:-.}"
+while read filepath
+do
+  sed -i '' 's/2/1/g' "${filepath}"
+  filedir="${filepath%/*}"
+  new_filename="${filepath##*/}"
+  new_filename="${new_filename/2/1}"
+  new_filepath="${filedir}/${new_filename}"
+  if [ "${new_filepath}" != "${filepath}" ]
+  then
+    mv "${filepath}" "${new_filepath}"
+  fi
+done < <(find "${targetdir}" -type f \( -name '*.java' -or -name '*.gradle' \) )
+
+
